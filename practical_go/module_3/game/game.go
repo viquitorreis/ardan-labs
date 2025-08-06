@@ -51,6 +51,9 @@ func main() {
 	}
 }
 
+// go install golang.org/x/tools/cmd/stringer@latest
+// stringer -type Key
+
 // Sortable vai implementar um tipo que pode ser COMPARAVEL para fazer o sort
 type Sortable interface {
 	// podemos usar o indice dos elementos para comparar
