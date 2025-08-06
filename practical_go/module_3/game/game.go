@@ -33,11 +33,30 @@ func main() {
 	p1.Move(100, 200)
 	fmt.Println("p1 (move) \n", p1)
 
-	fmt.Println(p1.Found("copper"))
-	fmt.Println(p1.Found("copper"))
-	fmt.Println(p1.Found("gold"))
+	fmt.Println(p1.Found(Copper))
+	fmt.Println(p1.Found(Crystal))
+	fmt.Println(p1.Found(Key(7)))
 
 	fmt.Println("keys:", p1.Keys)
+
+	// só vai dar certo de passar como pointer - pois o método está usando um POINTER METHOD
+	ms := []Mover{
+		&i,
+		&p1,
+	}
+
+	moveAll(ms, 50, 70)
+	for _, m := range ms {
+		fmt.Println(m)
+	}
+}
+
+// Sortable vai implementar um tipo que pode ser COMPARAVEL para fazer o sort
+type Sortable interface {
+	// podemos usar o indice dos elementos para comparar
+	Less(i, j int) bool
+	Swap(i, j int)
+	Len() int
 }
 
 type Item struct {
@@ -45,10 +64,47 @@ type Item struct {
 	Y int
 }
 
+type Key byte
+
 type Player struct {
 	Name string
 	Item // campo implicito (COMPOSITION)
-	Keys []string
+	Keys []Key
+}
+
+/*
+Interfaces
+  - Interfaces são pequenas (stdlib geralmente usa ~2 methodos)
+  - Se tiver uma interface com 4 métodos, pense novamente
+*/
+type Mover interface {
+	Move(int, int)
+}
+
+const (
+	Copper Key = iota + 1
+	Jade
+	Crystal
+)
+
+func moveAll(ms []Mover, dx, dy int) {
+	for _, m := range ms {
+		m.Move(dx, dy)
+	}
+}
+
+// a interface String implementa um metodo String() que nao retorna erro
+func (k Key) String() string {
+	switch k {
+	case Copper:
+		return "copper"
+	case Jade:
+		return "jade"
+	case Crystal:
+		return "crystal"
+	}
+
+	return fmt.Sprintf("<Key %d>", k)
 }
 
 /*
@@ -104,9 +160,9 @@ func (i *Item) Move(dx, dy int) {
 }
 
 // Pointer Semantics - vamos mutar o player
-func (p *Player) Found(key string) error {
+func (p *Player) Found(key Key) error {
 	switch key {
-	case "copper", "jade", "crystal":
+	case Copper, Jade, Crystal:
 		// ok
 	default:
 		return fmt.Errorf("unknown key: %q", key)
