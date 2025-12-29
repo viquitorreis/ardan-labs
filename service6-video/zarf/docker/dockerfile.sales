@@ -1,0 +1,34 @@
+# 1. Vamos fazer o build do nosso software em cima de uma imagem antes
+# e vamos pegar esse binário que foi gerado para colocar em uma imagem final
+# isso é bom caso esteja fazendo build em um ambiente diferente do ambiente de produção
+FROM golang:1.25 AS build_sales
+# desabilita o uso de C na compilação para caso tenha qualquer dependencia em C - como pacotes crypto
+ENV CGO_ENABLED=0
+# define o diretório de trabalho dentro do container
+ARG BUILD_REF
+
+# como temos o vendor, podemos simplesmente copiar o código fonte (excluimos o que nao queremos no dockerignore)
+COPY . /service
+
+# Construindo o binário do serviço
+WORKDIR /service/apis/services/sales
+RUN go build -ldflags="-X main.build=${BUILD_REF}"
+
+# Imagem final
+FROM alpine:3.19
+ARG BUILD_DATE
+ARG BUILD_REF
+# Permissões que o binário vai ter ao rodar dentro do ambiente docker
+RUN addgroup -g 1000 -S sales && \
+    adduser -u 1000 -h /service -G sales -S sales
+COPY --from=build_sales --chown=sales:sales /service/apis/services/sales/sales /service/sales
+WORKDIR /service
+USER sales
+CMD ["./sales"]
+
+LABEL org.opencontainers.image.authors="Vitor Reis <victorreisprog@gmail.com" \
+        org.opencontainers.image.created=$BUILD_DATE \
+        org.opencontainers.image.title="Sales Service" \
+        org.opencontainers.image.revision=$BUILD_REF \
+        org.opencontainers.image.source="https://github.com/viquitorreis/service6-video/tree/main" \
+        org.opencontainers.image.vendor="Vitor Reis"
